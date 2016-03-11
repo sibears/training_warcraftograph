@@ -2,8 +2,10 @@
 import Image
 import math
 
+image_dir = 'icons/'
 base_image = Image.open("test_picture.jpg")
 max_count = base_image.size[0] * base_image.size[1]/64/64
+
 x = 0
 y = 0
 z = 64
@@ -30,7 +32,7 @@ for i in xrange(0, max_count):
         z += 64
         current_im = current_image.load()
 	for j in xrange(0 ,len(list_name)):
-		image_for_compare = Image.open(list_name[j])
+		image_for_compare = Image.open(image_dir + list_name[j])
 		im_for_compare = image_for_compare.load()
 		f = 0
 		for l in xrange (0 , image_for_compare.size[0]):
@@ -40,9 +42,6 @@ for i in xrange(0, max_count):
 		if f>20:
 			ls_in_hex += wordindex[list_name[j]]
 
-for i in xrange(0 , len(ls_in_hex),2):
-	plaintext += chr(int(str(ls_in_hex[i:i+2]), 16))
+plaintext = ls_in_hex.decode('hex')
 
 print plaintext
-
-			
