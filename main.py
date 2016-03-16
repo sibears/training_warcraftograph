@@ -1,7 +1,7 @@
 import json
 import os.path
 import sqlite3
-#import warcraftograph
+import warcraftograph
 from flask import Flask, make_response, render_template
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ def get_secret():
     return render_template('get_secret.html')
 
 @app.route('/secret/<int:id>')
-def get_secret(id):
+def get_secret_by_id(id):
     fname = "static/cache/%d.jpg" % (id)
     # If the secret hasn't been cached yet
     if not os.path.isfile(fname):
@@ -31,6 +31,7 @@ def get_secret(id):
             id = "nosuchsecret"
             secret_name = "No such secret!"
         else:
+            pass
             #img = warcraftograph.encode(secret, fname)
     return render_template('secret.html', name=secret_name, id=id)
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     cmd = '''
         CREATE TABLE IF NOT EXISTS
             secrets(
-                id INTEGER AUTOINCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
                 secret TEXT,
                 public INTEGER
