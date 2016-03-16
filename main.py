@@ -1,4 +1,5 @@
 import json
+import random
 import os.path
 import sqlite3
 import warcraftograph
@@ -7,6 +8,12 @@ app = Flask(__name__)
 
 PORT = 8084
 DB_FILE = './db_secrets.db'
+EXCUSES = [ "Sorry, our murlocs can't find your secret! Are your sure that it was stored?",
+            "Our shaman gets into the astral storm. The only thing he told us before become insane 'Nhhossuch zzecret'",
+            "Secrets? No such secrets! But u look like a fresh meeeeeat",
+            "Doez your secret sounds like 'Mrglw mrlrlrlgl mrgl'? If no - i can't find it!",
+            "Did u give money to lil' Muergll? No money - no secrets, greeny-skinny!"
+]
 
 @app.route('/')
 def main():
@@ -38,7 +45,7 @@ def show_secrets():
         secrets = [(secret_name,'/api/image/%d'%row[0]) for row in c]
         cssclass = "img-thumbnail"
     else:
-        msg = "Sorry, our murlocs can't find your secret!"
+        msg = random.choice(EXCUSES)
         secrets = [(msg, "/api/image/nosuchsecret")]
         cssclass = ""
 
@@ -59,7 +66,7 @@ def get_secret_by_id(id):
 
     if not result:
         fname = "/api/image/nosuchsecret"
-        secret_name = "Sorry, our murlocs can't find your secret!"
+        secret_name = random.choice(EXCUSES)
         cssclass = ""
     else:
         fname = "/api/image/" + id
@@ -71,7 +78,7 @@ def get_secret_by_id(id):
 
 @app.route('/store')
 def store_secret():
-    return render_template('store_secret.html')
+    return render_template('store_secret.html', mind_id=random.randint(1,700))
 
 @app.route('/api/image/<id>')
 def get_image(id):
@@ -132,7 +139,7 @@ def api_store_secret():
     c.execute(query, (secret_name, secret))
 
     url = '/secret/' + str(c.fetchone()[0])
-    message = 'Your secret is successfullly saved and is avaible <b><u><a href="%s">here</a></u></b>'
+    message = 'Your secret is successfullly stored in spirit\'s mind and is avaible <b><u><a href="%s">here</a></u></b>'
 
     result_json = { 'result':'success',
                     'message': message % url
