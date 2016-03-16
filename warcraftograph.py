@@ -1,15 +1,13 @@
-#!usr/bin/env python
 import Image
 
-def encode(plaintext , filename):
-	wordindex = {'0' : '_phys_1.jpg' , '1' : '_class_2.jpg' , '2' : '_class_2b.jpg' , '3' : '_resist_4.jpg' , '4' : '_class_3a.jpg' , '5' : '_feral_4a.jpg' , '6' : '_feral_5.jpg' , '7' : '_feral_6.jpg' , '8' : '_hand_1.jpg' , '9' : '_hand_5.jpg' , 'a' : '_nature_4.jpg' , 'b' : '_nature_6.jpg' , 'c' : '_nature_7.jpg' , 'd' : '_orb_1.jpg' , 'e' : '_orb_4.jpg' , 'f' : '_feral_2.jpg'}
+directory = "icons/"
+wordindex = {'0' : '_phys_1.jpg' , '1' : '_class_2.jpg' , '2' : '_class_2b.jpg' , '3' : '_resist_4.jpg' , '4' : '_class_3a.jpg' , '5' : '_feral_4a.jpg' , '6' : '_feral_5.jpg' , '7' : '_feral_6.jpg' , '8' : '_hand_1.jpg' , '9' : '_hand_5.jpg' , 'a' : '_nature_4.jpg' , 'b' : '_nature_6.jpg' , 'c' : '_nature_7.jpg' , 'd' : '_orb_1.jpg' , 'e' : '_orb_4.jpg' , 'f' : '_feral_2.jpg'}
+wordindex = dict((k, directory + v) for k, v in wordindex.iteritems())
 
-	ls_in_hex = ""
-	for i in xrange(0 , len(plaintext)):
-        	s = hex(ord(plaintext[i]))
-        	ls_in_hex += s[2:]
+def encode(plaintext , filename):
+	ls_in_hex = plaintext.encode('hex')
 	size_of_table = int(len(ls_in_hex)**0.5)+1
-	base_image = Image.new("RGB", (size_of_table * 64, size_of_table * 64), (255,255,255))
+	base_image = Image.new("RGB", (size_of_table * 64, size_of_table * 64), (0,0,0))
 
 	x = 0
 	y = 0
@@ -32,9 +30,6 @@ def encode(plaintext , filename):
 
 	base_image.save(filename)
 
-
-
-
 def decode(filename):
 	base_image = Image.open(filename)
 	max_count = base_image.size[0] * base_image.size[1]/64/64
@@ -47,8 +42,8 @@ def decode(filename):
 	plaintext = ""
 	ls_in_hex = ""
 
-	wordindex = {'_phys_1.jpg' : '0' ,'_class_2.jpg' : '1' ,'_class_2b.jpg' : '2' ,'_resist_4.jpg' : '3' ,'_class_3a.jpg' : '4' ,'_feral_4a.jpg' : '5' ,'_feral_5.jpg' : '6' ,'_feral_6.jpg' : '7' ,'_hand_1.jpg' : '8' ,'_hand_5.jpg' : '9' ,'_nature_4.jpg' : 'a' ,'_nature_6.jpg' : 'b' ,'_nature_7.jpg' : 'c' ,'_orb_1.jpg' : 'd' , '_orb_4.jpg' : 'e' , '_feral_2.jpg' : 'f'}
-	list_name = wordindex.keys()
+	decodeIndex = dict((v,k) for k,v in wordindex.iteritems())
+	list_name = decodeIndex.keys()
 
 	for i in xrange(0, max_count):
 		if(number>=size_of_table):
@@ -71,8 +66,7 @@ def decode(filename):
 					if ((current_im[l,l][0] != 255) and (current_im[l,l][1] != 255) and (current_im[l,l][1] != 255)):
 						f += 1
 			if f>20:
-				ls_in_hex += wordindex[list_name[j]]
+				ls_in_hex += decodeIndex[list_name[j]]
 
 	plaintext = ls_in_hex.decode('hex')
 	return plaintext
-
