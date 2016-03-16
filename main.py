@@ -2,10 +2,11 @@ import json
 import os.path
 import sqlite3
 import warcraftograph
-from flask import Flask, make_response, render_template
+from flask import Flask, request, render_template, send_file
 app = Flask(__name__)
 
 PORT = 8084
+DB_FILE = './db_secrets.db'
 
 @app.route('/')
 def main():
@@ -15,76 +16,132 @@ def main():
 def get_secret():
     return render_template('get_secret.html')
 
-@app.route('/secret/<int:id>')
-def get_secret_by_id(id):
-    fname = "static/cache/%d.jpg" % (id)
-    # If the secret hasn't been cached yet
-    if not os.path.isfile(fname):
-        c = db.cursor()
-        query = '''
-            SELECT name, secret FROM secrets
-            WHERE id = ?
-            '''
-        c.execute(query, (id))
-        secret_name, secret = c.fetchone()
-        if not secret:
-            id = "nosuchsecret"
-            secret_name = "No such secret!"
-        else:
-            pass
-            #img = warcraftograph.encode(secret, fname)
-    return render_template('secret.html', name=secret_name, id=id)
-
-@app.route('/store')
-def store_secret():
-    return render_template('store_secret.html')
-
-@app.route('/api/get', methods = ['GET'])
-def api_get_secret():
+@app.route('/show/secrets', methods = ['POST'])
+def show_secrets():
     secret_name = request.form['name']
+
+    db = sqlite3.connect(DB_FILE)
     c = db.cursor()
     query = '''
         SELECT count(*) FROM secrets
         WHERE name = ? AND public = 1
         '''
-    c.execute(query.replace('?',secret_name))
+    c.execute(query.replace('?','"%s"'%secret_name))
+
     if c.fetchone()[0] > 0:
         c = db.cursor()
         query = '''
-            SELECT secret FROM secrets
-            WHERE name = ? AND public = 1
+            SELECT id FROM secrets
+            WHERE name LIKE ? AND public = 1
             '''
-        c.execute(query, (secret_name))
-        secret_json = {'secrets': [row[0] for row in c]}
+        c.execute(query, [secret_name])
+        secrets = [(secret_name,'/api/image/%d'%row[0]) for row in c]
+        cssclass = "img-thumbnail"
     else:
-        secret_json = {'secrets': []}
-    return json.dumps(secret_json)
+        msg = "Sorry, our murlocs can't find your secret!"
+        secrets = [(msg, "/api/image/nosuchsecret")]
+        cssclass = ""
+
+    return render_template('secret.html', secrets=secrets, cssclass = cssclass)
+
+@app.route('/secret/<int:id>')
+def get_secret_by_id(id):
+    db = sqlite3.connect(DB_FILE)
+    id = str(id)
+
+    c = db.cursor()
+    query = '''
+        SELECT name FROM secrets
+        WHERE id = ?
+        '''
+    c.execute(query, [id])
+    result = c.fetchone()
+
+    if not result:
+        fname = "/api/image/nosuchsecret"
+        secret_name = "Sorry, our murlocs can't find your secret!"
+        cssclass = ""
+    else:
+        fname = "/api/image/" + id
+        secret_name = result[0]
+        secret_name = '"%s"' % secret_name
+        cssclass = "img-thumbnail"
+
+    return render_template('secret.html', secrets=[(secret_name,fname)], cssclass=cssclass)
+
+@app.route('/store')
+def store_secret():
+    return render_template('store_secret.html')
+
+@app.route('/api/image/<id>')
+def get_image(id):
+    if id == "nosuchsecret":
+        return send_file("static/nosecret.png", mimetype="image/png")
+
+    fname = "cache/%s.jpg" % (id)
+    # If the secret has been already cached
+    if not os.path.isfile(fname):
+        db = sqlite3.connect(DB_FILE)
+        c = db.cursor()
+        query = '''
+            SELECT secret FROM secrets
+            WHERE id = ?
+            '''
+        c.execute(query, [id])
+        secret = c.fetchone()[0]
+        warcraftograph.encode(secret, fname)
+
+    return send_file(fname, mimetype="image/jpeg")
+
+@app.route('/api/get', methods = ['GET'])
+def api_get_secret():
+    #TODO
+    return "OK"
 
 @app.route('/api/store', methods = ['POST'])
 def api_store_secret():
+    print request.form
     secret_name = request.form['name']
     secret = request.form['secret']
-    is_public = request.form['public']
-    if is_public:
+    if 'public' in request.form:
         is_public = 1
     else:
         is_public = 0
 
+    db = sqlite3.connect(DB_FILE)
     c = db.cursor()
-    query = '''
-        INSERT INTO secrets(name, secret, public)
-        VALUES (?,?,?)
-        '''
-    c.execute(query, (secret_name, secret, is_public))
-    db.commit()
 
-    result_json = {"result":"sucess"}
+    query = '''
+        SELECT count(*) FROM secrets
+        WHERE name = ? AND secret = ?
+        '''
+    c.execute(query, (secret_name, secret))
+
+    if int(c.fetchone()[0]) == 0:
+        query = '''
+            INSERT INTO secrets(name, secret, public)
+            VALUES (?,?,?)
+            '''
+        c.execute(query, (secret_name, secret, is_public))
+        db.commit()
+
+    query = '''
+        SELECT id FROM secrets
+        WHERE name = ? AND secret = ?
+        '''
+    c.execute(query, (secret_name, secret))
+
+    url = '/secret/' + str(c.fetchone()[0])
+    message = 'Your secret is successfullly saved and is avaible <b><u><a href="%s">here</a></u></b>'
+
+    result_json = { 'result':'success',
+                    'message': message % url
+                  }
     return json.dumps(result_json)
 
 if __name__ == "__main__":
-    global db
-    db = sqlite3.connect('./db_secrets.db')
 
+    db = sqlite3.connect(DB_FILE)
     c = db.cursor()
     cmd = '''
         CREATE TABLE IF NOT EXISTS
