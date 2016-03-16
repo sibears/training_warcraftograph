@@ -154,4 +154,7 @@ if __name__ == "__main__":
     c.execute(cmd)
     db.commit()
 
+    if not os.path.isdir('cache'):
+        os.mkdir("cache")
+
     app.run ( host = '0.0.0.0', port = PORT, debug=True )
