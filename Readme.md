@@ -18,9 +18,10 @@ WarCraft-o-Graph is a training service created by part of SiBears team. Service 
      * serviceVoljin -- fixed SQL but has unchanged WARCHIEF_SECRET
      * serviceThrall -- the only vuln (we hope) is wrong bcrypt usage
   4. checker.py -- checker file for [that](http://ctf.hcesperer.org/gameserver/) jury system
+  5. IconsHD -- folder with highres icons and PSD file with service logo
 
- ### Authors:
-    * Anna Zueva -- Frontend
-    * Irina Borovkova -- Warcraftograph module
-    * Nikita Oleksov -- Checker and testing
-    * Oleg Broslavsky -- Backend
+### Authors:
+  * Anna Zueva -- Frontend
+  * Irina Borovkova -- Warcraftograph module
+  * Nikita Oleksov -- Checker and testing
+  * Oleg Broslavsky -- Backend
