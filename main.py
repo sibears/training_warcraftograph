@@ -28,7 +28,10 @@ def get_secret():
 
 @app.route('/show/secrets', methods = ['POST'])
 def show_secrets():
-    secret_name = request.form['name']
+    try:
+        secret_name = request.form['name']
+    except:
+        return "Wrong arguments"
 
     db = sqlite3.connect(DB_FILE)
     c = db.cursor()
@@ -175,10 +178,16 @@ def api_get_secret():
 
 @app.route('/api/store', methods = ['POST'])
 def api_store_secret():
-    print request.form
-    secret_name = request.form['name']
-    secret = request.form['secret']
-    if 'public' in request.form:
+    try:
+        secret_name = request.form['name']
+        secret = request.form['secret']
+    except:
+        return json.dumps({
+                    "result":"error",
+                    "message": "Wrong arguments"
+                })
+
+    if 'public' in request.form and request.form['public']:
         is_public = 1
     else:
         is_public = 0
