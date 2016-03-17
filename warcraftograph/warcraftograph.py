@@ -1,8 +1,9 @@
+import os
 from PIL import Image
 
-directory = "icons/"
+directory = os.path.join(os.path.dirname(__file__), "icons")
 wordindex = {'0' : '_phys_1.jpg' , '1' : '_class_2.jpg' , '2' : '_class_2b.jpg' , '3' : '_resist_4.jpg' , '4' : '_class_3a.jpg' , '5' : '_feral_4a.jpg' , '6' : '_feral_5.jpg' , '7' : '_feral_6.jpg' , '8' : '_hand_1.jpg' , '9' : '_hand_5.jpg' , 'a' : '_nature_4.jpg' , 'b' : '_nature_6.jpg' , 'c' : '_nature_7.jpg' , 'd' : '_orb_1.jpg' , 'e' : '_orb_4.jpg' , 'f' : '_feral_2.jpg'}
-wordindex = dict((k, directory + v) for k, v in wordindex.iteritems())
+wordindex = dict((k, os.path.join(directory, v)) for k, v in wordindex.iteritems())
 
 def encode(plaintext , filename):
 	ls_in_hex = plaintext.encode('hex')
