@@ -101,9 +101,13 @@ def get_image(id):
             WHERE id = ?
             '''
         c.execute(query, [id])
-        secret = c.fetchone()[0]
-        warcraftograph.encode(secret, fname)
-
+        result = c.fetchone()
+        if result:
+            secret = result[0]
+            warcraftograph.encode(secret, fname)
+        else:
+            return send_file("static/nosecret.png", mimetype="image/png")
+            
     return send_file(fname, mimetype="image/jpeg")
 
 @app.route('/api/warchief/check')
