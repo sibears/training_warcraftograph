@@ -92,7 +92,6 @@ def retrieve((ip, flagid, flag)):
     c = db.cursor()
     c.execute("SELECT url FROM urls WHERE flagid='%s'" % flagid )
     num = c.fetchone()[0]
-    print num
     try:
         r = requests.get('http://'+str(ip)+':8084'+num, stream=True)
         if r.status_code == 200:
