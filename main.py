@@ -83,7 +83,7 @@ def get_secret_by_id(id):
 def store_secret():
     return render_template('store_secret.html', mind_id=random.randint(1,700))
 
-@app.route('/api/image/<id>')
+@app.route('/api/image/<path:id>')
 def get_image(id):
     if id == "nosuchsecret":
         return send_file("static/nosecret.png", mimetype="image/png")
