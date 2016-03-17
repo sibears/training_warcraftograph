@@ -1,5 +1,6 @@
 import json
 import random
+import bcrypt
 import os.path
 import sqlite3
 import warcraftograph
@@ -8,6 +9,8 @@ app = Flask(__name__)
 
 PORT = 8084
 DB_FILE = './db_secrets.db'
+# don't forget to change it, my Lord
+WARCHIEF_SECRET = 'FORDAHORDE'
 EXCUSES = [ "Sorry, our murlocs can't find your secret! Are your sure that it was stored?",
             "Our shaman gets into the astral storm. The only thing he told us before become insane 'Nhhossuch zzecret'",
             "Secrets? No such secrets! But u look like a fresh meeeeeat",
@@ -99,6 +102,42 @@ def get_image(id):
         warcraftograph.encode(secret, fname)
 
     return send_file(fname, mimetype="image/jpeg")
+
+@app.route('/api/warchief/check')
+def check_secret():
+    try:
+        secret = request.args.get('secret')
+        user_hash = request.args.get('hash').decode('hex')
+    except TypeError:
+        return "You are not Warchief, pleb!"
+    except:
+        return "You need to proof that your are our Warthief!"
+
+    to_hash = ''
+    for k, v in request.args.items():
+        if k == "hash":
+            continue
+        to_hash += str(v)
+    print to_hash
+
+    try:
+        if bcrypt.hashpw(to_hash + WARCHIEF_SECRET, user_hash) != user_hash:
+            return "Proof failed! Access to the Astral denied!"
+    except:
+        return "Are you trying to fool me, pleb?!"
+
+    db = sqlite3.connect(DB_FILE)
+    c = db.cursor()
+    query = '''
+        SELECT count(*) FROM secrets
+        WHERE public = 0  AND secret LIKE ?
+        '''
+    c.execute(query, [secret])
+
+    if c.fetchone()[0] > 0:
+        return "We have dat secret, chief!"
+    else:
+        return "Nobody hides anything like that from your power"
 
 @app.route('/api/get', methods = ['GET'])
 def api_get_secret():
