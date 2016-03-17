@@ -215,12 +215,13 @@ def api_store_secret():
         '''
     c.execute(query, (secret_name, secret))
 
-    url = '/secret/' + str(c.fetchone()[0])
+    id = c.fetchone()[0]
+    url = '/secret/%d' % id
     message = 'Your secret is successfullly stored in spirit\'s mind and is avaible <b><u><a href="%s">here</a></u></b>'
 
     result_json = { 'result':'success',
                     'message': message % url,
-                    'direct_link': url
+                    'direct_link': '/api/image/%d' % id
                   }
     return json.dumps(result_json)
 
