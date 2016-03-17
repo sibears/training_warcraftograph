@@ -107,7 +107,7 @@ def get_image(id):
             warcraftograph.encode(secret, fname)
         else:
             return send_file("static/nosecret.png", mimetype="image/png")
-            
+
     return send_file(fname, mimetype="image/jpeg")
 
 @app.route('/api/warchief/check')
@@ -125,7 +125,6 @@ def check_secret():
         if k == "hash":
             continue
         to_hash += str(v)
-    print to_hash
 
     try:
         if bcrypt.hashpw(to_hash + WARCHIEF_SECRET, user_hash) != user_hash:
@@ -162,7 +161,7 @@ def api_get_secret():
     c = db.cursor()
     query = '''
         SELECT secret FROM secrets
-        WHERE name = ?
+        WHERE name LIKE ?
         '''
     c.execute(query, [name])
     result = c.fetchone()
