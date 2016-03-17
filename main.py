@@ -141,8 +141,37 @@ def check_secret():
 
 @app.route('/api/get', methods = ['GET'])
 def api_get_secret():
-    #TODO
-    return "OK"
+    #TODO: check select results
+
+    try:
+        name = request.args.get('name')
+    except:
+        return json.dumps({
+                    "result":"error",
+                    "message": "Wrong arguments"
+                })
+
+    db = sqlite3.connect(DB_FILE)
+    c = db.cursor()
+    query = '''
+        SELECT secret FROM secrets
+        WHERE name = ?
+        '''
+    c.execute(query, [name])
+    result = c.fetchone()
+
+    if result:
+        secret = result[0]
+        result = {
+            'result': 'success',
+            'name': name,
+            'secret': secret,
+        }
+        return json.dumps(result)
+    return json.dumps({
+                "result":"error",
+                "message": "No such secret"
+            })
 
 @app.route('/api/store', methods = ['POST'])
 def api_store_secret():
@@ -181,7 +210,8 @@ def api_store_secret():
     message = 'Your secret is successfullly stored in spirit\'s mind and is avaible <b><u><a href="%s">here</a></u></b>'
 
     result_json = { 'result':'success',
-                    'message': message % url
+                    'message': message % url,
+                    'direct_link': url
                   }
     return json.dumps(result_json)
 
