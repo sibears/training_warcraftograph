@@ -1,5 +1,6 @@
 import json
 import random
+import string
 import bcrypt
 import os.path
 import sqlite3
@@ -58,11 +59,9 @@ def show_secrets():
 
     return render_template('secret.html', secrets=secrets, cssclass = cssclass)
 
-@app.route('/secret/<int:id>')
+@app.route('/secret/<id>')
 def get_secret_by_id(id):
     db = sqlite3.connect(DB_FILE)
-    id = str(id)
-
     c = db.cursor()
     query = '''
         SELECT name FROM secrets
@@ -215,18 +214,26 @@ def api_store_secret():
         db.commit()
 
     query = '''
-        SELECT id FROM secrets
+        SELECT pid FROM secrets
         WHERE name = ? AND secret = ?
         '''
     c.execute(query, (secret_name, secret))
 
-    id = c.fetchone()[0]
-    url = '/secret/%d' % id
+    pid = c.fetchone()[0]
+    id = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(32))
+
+    query = '''
+        UPDATE secrets SET id = ? WHERE pid = ?
+        '''
+    c.execute(query, (id, pid))
+    db.commit()
+
+    url = '/secret/%s' % id
     message = 'Your secret is successfullly stored in spirit\'s mind and is avaible <b><u><a href="%s">here</a></u></b>'
 
     result_json = { 'result':'success',
                     'message': message % url,
-                    'direct_link': '/api/image/%d' % id
+                    'direct_link': '/api/image/%s' % id
                   }
     return json.dumps(result_json)
 
@@ -237,7 +244,8 @@ if __name__ == "__main__":
     cmd = '''
         CREATE TABLE IF NOT EXISTS
             secrets(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pid INTEGER PRIMARY KEY AUTOINCREMENT,
+                id TEXT,
                 name TEXT,
                 secret TEXT,
                 public INTEGER
