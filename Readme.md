@@ -19,6 +19,7 @@ WarCraft-o-Graph is a training service created by part of SiBears team. Service 
      * serviceThrall -- the only vuln (we hope) is wrong bcrypt usage
   4. checker.py -- checker file for [that](http://ctf.hcesperer.org/gameserver/) jury system
   5. IconsHD -- folder with highres icons and PSD file with service logo
+  6. Achievments -- folder with nice wow-like achievments according to main goals in the training
 
 ### Authors:
   * Anna Zueva -- Frontend
