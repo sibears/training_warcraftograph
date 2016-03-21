@@ -65,7 +65,7 @@ def store((ip, flagid, flag)):
 
     ses = requests.Session()
     try:
-        payload = {'name': flagid, 'secret': flag}
+        payload = {'name': flagid, 'secret': flag, 'public': 'false'}
         ans = ses.post('http://'+str(ip)+':8084/api/store',data=payload)
     except:
         die('conn')
