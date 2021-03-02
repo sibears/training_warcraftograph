@@ -61,25 +61,37 @@ def put(host: str, flag_id: str, flag: str):
     s = FakeSession(host, PORT)
 
     _log("Putting flag using REST API")
-    flag_link = _put_api(s, flag_id, flag)
-    print(flag_link, flush=True)  # It's our flag_id now! Tell it to jury!
-    die(ExitStatus.OK, f"All OK! Saved flag link: {flag_link}")
+    name = flag_id
+    flag_link = _put_api(s, name, flag)
+
+    new_id = f"{flag_link}:{name}"
+    print(new_id, flush=True)  # It's our flag_id now! Tell it to jury!
+    die(ExitStatus.OK, f"All OK! Saved flag: {new_id}")
 
 
 def get(host: str, flag_id: str, flag: str):
-    if not flag_id.startswith("/api/image/"):
+    try:
+        link, name = flag_id.split(sep=":", maxsplit=2)
+        if not link.startswith("/api/image/"):
+            raise ValueError
+    except:
         die(ExitStatus.CHECKER_ERROR,
             f"Unexpected flagID from jury: {flag_id}! Are u using non-RuCTF checksystem?")
 
     s = FakeSession(host, PORT)
 
-    # TODO: check get raw secret by name also.
-
-    _log("Getting flag using image access")
-    message = _get_from_image(s, flag_id)
-    if flag not in message:
-        die(ExitStatus.CORRUPT, f"Can't find a flag in {message}")
-    die(ExitStatus.OK, f"All OK! Successfully retrieved a flag from {flag_id}")
+    if _roll():
+        _log("Getting flag using image access")
+        message = _get_from_image(s, link)
+        if flag not in message:
+            die(ExitStatus.CORRUPT, f"Can't find a flag in {message}")
+        die(ExitStatus.OK, f"All OK! Successfully retrieved a flag from {link}")
+    else:
+        _log("Getting flag using API")
+        message = _get_from_api(s, name)
+        if flag not in message:
+            die(ExitStatus.CORRUPT, f"Can't find a flag in {message}")
+        die(ExitStatus.OK, f"All OK! Successfully retrieved a flag from API by name {name}")
 
 
 class FakeSession(requests.Session):
@@ -174,6 +186,25 @@ def _get_from_image(s: FakeSession, link: str) -> str:
         return warcraftograph.decode(r.raw)
     except Exception as e:
         die(ExitStatus.MUMBLE, f"Unexpected error reading body: {e}")
+
+
+def _get_from_api(s: FakeSession, name: str) -> str:
+    try:
+        r = s.get("/api/get", timeout=10, params=dict(
+            name=name,
+        ))
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed to get flag via direct API: {e}")
+
+    if r.status_code != 200:
+        die(ExitStatus.MUMBLE, f"Unexpected HTTP code {r.status_code} on /api/get")
+
+    try:
+        secret = r.json()["secret"]
+    except ValueError:
+        die(ExitStatus.MUMBLE, f"Incorrect json in /api/get: {r.text}")
+
+    return secret
 
 
 def _show_secrets(s: FakeSession, name: str) -> {str: str}:

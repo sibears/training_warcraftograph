@@ -157,7 +157,7 @@ def api_get_secret():
     # TODO: check select results
 
     try:
-        name = request.args.get('name')
+        name = request.args['name']
     except:
         return json.dumps({
             "result": "error",
@@ -168,10 +168,10 @@ def api_get_secret():
     c = db.cursor()
     query = '''
         SELECT secret FROM secrets
-        WHERE name LIKE ?
+        WHERE name LIKE ? ORDER BY pid DESC
         '''
     c.execute(query, [name])
-    result = c.fetchone()
+    result = c.fetchone()  # Freshest.
 
     if result:
         secret = result[0]
