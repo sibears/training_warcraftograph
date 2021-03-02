@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import inspect
 import os
 import random
 import string
@@ -11,7 +12,9 @@ import sys
 from enum import Enum
 from sys import argv
 
+import bcrypt
 import requests
+from bs4 import BeautifulSoup
 
 from warcraftograph import warcraftograph
 
@@ -22,35 +25,43 @@ EXPLOIT_NAME = argv[0]
 
 # DEBUG enables verbose output of all socket messages
 DEBUG = os.getenv("DEBUG", False)
+TRACE = os.getenv("TRACE", False)
 """ </config> """
 
 
 def check(host: str):
-    die(code=ExitStatus.OK)
+    # TODO strings generation
+    name = _rand_string(36)
+    secret = _rand_string(100)
+
+    s = FakeSession(host, PORT)
+
+    _log(f"Going to save secret '{name}' as public")
+    link = _put_api(s, name, secret, is_public=True)
+    if _get_from_image(s, link) != secret:
+        die(ExitStatus.CORRUPT, "Incorrect flag for public secret")
+
+    _log(f"Ensure we can use like for public posts")
+    like_pattern = name[:-1] + "_"
+    secrets = _show_secrets(s, like_pattern)
+    if name not in secrets:
+        _log(f"Got unexpected secrets: {secrets}")
+        die(ExitStatus.MUMBLE, f"Can't list my secret using {like_pattern}")
+    if secrets[name] != link:
+        die(ExitStatus.CORRUPT, f"Got unexpected secret for '{name}': {secrets[name]}")
+
+    _log(f"Ensure Warchief API was not redacted entirely")
+    if _is_warchief_api_open(s):  # Will exit on mumble.
+        _log(f"WARCHIEF SECRET WAS NOT CHANGED!")
+
+    die(ExitStatus.OK, "Check ALL OK")
 
 
 def put(host: str, flag_id: str, flag: str):
     s = FakeSession(host, PORT)
 
     _log("Putting flag using REST API")
-    try:
-        r = s.post("/api/store", timeout=10, data=dict(
-            name=flag_id,  # TODO: generate funny name
-            secret=flag,
-            public=False,
-        ))
-    except Exception as e:
-        die(ExitStatus.DOWN, f"Failed to post flag via API: {e}")
-
-    if r.status_code != 200:
-        die(ExitStatus.MUMBLE, f"Unexpected /api/store code {r.status_code}")
-
-    try:
-        flag_link = r.json()["direct_link"]
-        if not flag_link: raise ValueError
-    except (ValueError, KeyError):
-        die(ExitStatus.MUMBLE, f"No direct_link in {r.text}")
-
+    flag_link = _put_api(s, flag_id, flag)
     print(flag_link, flush=True)  # It's our flag_id now! Tell it to jury!
     die(ExitStatus.OK, f"All OK! Saved flag link: {flag_link}")
 
@@ -65,20 +76,7 @@ def get(host: str, flag_id: str, flag: str):
     # TODO: check get raw secret by name also.
 
     _log("Getting flag using image access")
-    try:
-        r = s.get(flag_id, timeout=20, stream=True)
-    except Exception as e:
-        die(ExitStatus.DOWN, f"Failed to get flag via image API: {e}")
-
-    if r.status_code != 200:
-        die(ExitStatus.MUMBLE, f"Unexpected f{flag_id} code {r.status_code}")
-
-    try:
-        r.raw.decode_content = True
-        message = warcraftograph.decode(r.raw)
-    except Exception as e:
-        die(ExitStatus.MUMBLE, f"Unexpected error reading body: {e}")
-
+    message = _get_from_image(s, flag_id)
     if flag not in message:
         die(ExitStatus.CORRUPT, f"Can't find a flag in {message}")
     die(ExitStatus.OK, f"All OK! Successfully retrieved a flag from {flag_id}")
@@ -134,9 +132,96 @@ class FakeSession(requests.Session):
             url = url.format(host=self.host_port)
         r = super(FakeSession, self).request(method, url, params, data, headers, cookies, files,
                                              auth, timeout, allow_redirects, proxies, hooks, stream, verify, cert, json)
-        if DEBUG:
-            print("[DEBUG] {method} {url} {r.status_code}".format(**locals()))
+        if TRACE:
+            print("[TRACE] {method} {url} {r.status_code}".format(**locals()))
         return r
+
+
+def _put_api(s: FakeSession, flag_id: str, flag: str, is_public=False) -> str:
+    try:
+        r = s.post("/api/store", timeout=10, data=dict(
+            name=flag_id,  # TODO: generate funny name
+            secret=flag,
+            public=is_public,
+        ))
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed to post flag via API: {e}")
+
+    if r.status_code != 200:
+        die(ExitStatus.MUMBLE, f"Unexpected /api/store code {r.status_code}")
+
+    try:
+        flag_link = r.json()["direct_link"]
+        if flag_link:
+            return flag_link
+        else:
+            raise ValueError
+    except (ValueError, KeyError):
+        die(ExitStatus.MUMBLE, f"No direct_link in {r.text}")
+
+
+def _get_from_image(s: FakeSession, link: str) -> str:
+    try:
+        r = s.get(link, timeout=20, stream=True)
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed to get flag via image API: {e}")
+
+    if r.status_code != 200:
+        die(ExitStatus.MUMBLE, f"Unexpected f{link} code {r.status_code}")
+
+    try:
+        r.raw.decode_content = True
+        return warcraftograph.decode(r.raw)
+    except Exception as e:
+        die(ExitStatus.MUMBLE, f"Unexpected error reading body: {e}")
+
+
+def _show_secrets(s: FakeSession, name: str) -> {str: str}:
+    try:
+        r = s.post("/show/secrets", timeout=20, data=dict(
+            name=name,
+        ))
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed to get flag via image API: {e}")
+
+    if r.status_code != 200:
+        die(ExitStatus.MUMBLE, f"Unexpected code {r.status_code} at /show/secrets")
+
+    res = {}
+    try:
+        bs = BeautifulSoup(r.text, features="html.parser")
+        secrets_div = bs.find("div", attrs={
+            "class": "inner cover secrets",
+        })
+        names = secrets_div.find_all("h1")
+        links = secrets_div.find_all("img")
+
+        for h1, img in zip(names, links):
+            res[h1.get_text()] = img.get("src")
+    except Exception as e:
+        die(ExitStatus.MUMBLE, f"Can't parse /show/secrets output: {e}")
+
+    return res
+
+
+def _is_warchief_api_open(s: FakeSession) -> bool:
+    payload = "%"
+    default_secret = 'FORDAHORDE'
+    try:
+        r = s.get("/api/warchief/check", timeout=10, params=dict(
+            secret=payload,
+            hash=bcrypt.hashpw(payload + default_secret, bcrypt.gensalt()),
+        ))
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed check Warchief API: {e}")
+
+    answer = r.text
+    if "We have dat secret, chief!" in answer:
+        return True
+    elif 'Proof failed!' in answer:
+        return False
+    else:
+        die(ExitStatus.MUMBLE, f"Unexpected Warchief API answer: {r.text}")
 
 
 def _roll(a=0, b=1):
@@ -149,7 +234,8 @@ def _rand_string(n=12, alphabet=string.ascii_uppercase + string.ascii_lowercase 
 
 def _log(obj):
     if DEBUG and obj:
-        print(obj, file=sys.stderr)
+        caller = inspect.stack()[1].function
+        print(f"[{caller}] {obj}", file=sys.stderr)
     return obj
 
 

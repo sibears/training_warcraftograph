@@ -13,7 +13,6 @@ app = Flask(__name__)
 
 PORT = 8084
 DB_FILE = './db_secrets.db'
-# don't forget to change it, my Lord
 WARCHIEF_SECRET = 'FORDAHORDE'
 EXCUSES = ["Sorry, our murlocs can't find your secret! Are your sure that it was stored?",
            "Our shaman gets into the astral storm. The only thing he told us before become insane 'Nhhossuch zzecret'",
@@ -44,18 +43,18 @@ def show_secrets():
     c = db.cursor()
     query = '''
         SELECT count(*) FROM secrets
-        WHERE name = ? AND public = 1
+        WHERE name LIKE ? AND public = 1
         '''
     c.execute(query.replace('?', '"%s"' % secret_name))
 
-    if c.fetchone()[0] > 0:
+    if int(c.fetchone()[0]) > 0:
         c = db.cursor()
         query = '''
-            SELECT id FROM secrets
+            SELECT id,name FROM secrets
             WHERE name LIKE ? AND public = 1
             '''
         c.execute(query, [secret_name])
-        secrets = [(secret_name, '/api/image/%s' % row[0]) for row in c]
+        secrets = [(row[1], '/api/image/%s' % row[0]) for row in c]
         cssclass = "img-thumbnail"
     else:
         msg = random.choice(EXCUSES)
@@ -122,12 +121,10 @@ def get_image(id):
 @app.route('/api/warchief/check')
 def check_secret():
     try:
-        secret = request.args.get('secret')
-        user_hash = request.args.get('hash')
-    except TypeError:
-        return "You are not Warchief, pleb!"
+        secret = request.args['secret']
+        user_hash = request.args['hash']
     except:
-        return "You need to proof that your are our Warchief!"
+        return "You are not Warchief, pleb!"
 
     to_hash = ''
     for k, v in request.args.items():
