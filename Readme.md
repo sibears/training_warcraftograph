@@ -25,7 +25,8 @@ to allow players to attack more vulns.
      * serviceBloodhoof -- fixed hashes but has some SQL vulns.
      * serviceVoljin -- fixed SQL but has unchanged WARCHIEF_SECRET
      * serviceThrall -- the only vuln (we hope) is wrong bcrypt usage
-  4. checker.py -- checker file for [that](http://ctf.hcesperer.org/gameserver/) jury system
+  4. checker.py -- checker file for [Hackerdom Checksystem](https://github.com/HackerDom/checksystem)
+     (**note that it uses flag_id replacement feature!**)
   5. IconsHD -- folder with highres icons and PSD file with service logo
   6. Achievments -- folder with nice wow-like achievments according to main goals in the training
 

@@ -7,7 +7,6 @@ from __future__ import print_function
 import inspect
 import os
 import random
-import string
 import sys
 from enum import Enum
 from sys import argv
@@ -18,21 +17,23 @@ from bs4 import BeautifulSoup
 
 from warcraftograph import warcraftograph
 
+# Make all random more random.
+random = random.SystemRandom()
+
 """ <config> """
 # SERVICE INFO
 PORT = 8084
 EXPLOIT_NAME = argv[0]
 
-# DEBUG enables verbose output of all socket messages
+# DEBUG -- logs to stderr, TRACE -- log HTTP requests
 DEBUG = os.getenv("DEBUG", False)
 TRACE = os.getenv("TRACE", False)
 """ </config> """
 
 
 def check(host: str):
-    # TODO strings generation
-    name = _rand_string(36)
-    secret = _rand_string(100)
+    name = _gen_secret_name()
+    secret = _gen_secret_data()
 
     s = FakeSession(host, PORT)
 
@@ -60,7 +61,7 @@ def check(host: str):
 def put(host: str, flag_id: str, flag: str):
     s = FakeSession(host, PORT)
 
-    name = flag_id
+    name = _gen_secret_name()
     if _roll(1, 10) > 2:
         _log("Putting flag using REST API")
         flag_link = _put_api(s, name, flag)
@@ -313,8 +314,60 @@ def _roll(a=0, b=1):
     return random.randint(a, b)
 
 
-def _rand_string(n=12, alphabet=string.ascii_uppercase + string.ascii_lowercase + string.digits):
-    return ''.join(random.choice(alphabet) for _ in range(n))
+def _gen_secret_name() -> str:
+    intros = [
+        "Secrets about", "Tactics for", "Loot list of", "Plans to assault", "Notes from",
+        "Tips for", "Wipes at", "Tries of", "EP/GP score after", "Kill List in",
+        "Looking for raid to", "Mrgles Murgles, mmm", "Sexy cows of", "My enemies in"
+    ]
+    places = [
+        "Stormwind City", "Ironforge", "Darnassus", "Gnomeregan", "The Exodar", "Gilneas City",
+        "The Vindicaar", "Telogrus Rift", "Shadowforge City", "Boralus", "Mechagon City",
+        "Khaz Modan", "Northern Kalimdor", "Eastern Kingdoms", "Kul Tiras", "Gnomeregan",
+
+        "Scarlet Monastery", "Razorfen Kraul", "Uldaman", "Razorfen Downs",
+        "Zul’Farrak", "Maraudon", "Temple of Atal’Hakkar", "Blackrock Depths",
+        "Lower Blackrock Spire", "Upper Blackrock Spire", "Dire Maul", "Scholomance", "Stratholme",
+    ]
+    return f"{random.choice(intros)} {random.choice(places)} #{random.randint(1, 100_000_000_000)}"
+
+
+def _gen_secret_data(name: str = "") -> str:
+    # https://randomwordgenerator.com/sentence.php
+    secrets = [
+        "Her life in the confines of the house became her new normal.",
+        "He always wore his sunglasses at night.",
+        "All they could see was the blue water surrounding their sailboat.",
+        "Separation anxiety is what happens when you can't find your phone.",
+        "He found the chocolate covered roaches quite tasty.",
+        "Dan took the deep dive down the rabbit hole.",
+        "I may struggle with geography, but I'm sure I'm somewhere around here.",
+        "The opportunity of a lifetime passed before him as he tried to decide between a cone or a cup.",
+        "The spa attendant applied the deep cleaning mask to the gentleman’s back.",
+        "Shakespeare was a famous 17th-century diesel mechanic.",
+        "Nudist colonies shun fig-leaf couture.",
+        "The beauty of the African sunset disguised the danger lurking nearby.",
+        "The secret code they created made no sense, even to them.",
+        "The urgent care center was flooded with patients after the news of a new deadly virus was made public.",
+        "Greetings from the galaxy MACS0647-JD, or what we call home.",
+        "The efficiency we have at removing trash has made creating trash more acceptable.",
+        "It dawned on her that others could make her happier, but only she could make herself happy.",
+        "Eating eggs on Thursday for choir practice was recommended.",
+        "Grape jelly was leaking out the hole in the roof.",
+        "The truth is that you pay for your lifestyle in hours.",
+        "Honestly, I didn't care much for the first season, so I didn't bother with the second.",
+        "There's a message for you if you look up.",
+        "She wasn't sure whether to be impressed or concerned that he folded underwear in neat little packages.",
+        "The teens wondered what was kept in the red shed on the far edge of the school grounds.",
+        "At that moment he wasn't listening to music, he was living an experience.",
+        "As he waited for the shower to warm, he noticed that he could hear water change temperature.",
+        "He found his art never progressed when he literally used his sweat and tears.",
+        "He excelled at firing people nicely.",
+    ]
+
+    if name:
+        name = f"I know you wanted to find here {name}, but it's better! Here is my secret\n:"
+    return name + random.choice(secrets)
 
 
 def _log(obj):
