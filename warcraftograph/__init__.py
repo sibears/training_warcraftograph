@@ -1,1 +1,1 @@
-from warcraftograph import encode,decode
+from .warcraftograph import encode, decode

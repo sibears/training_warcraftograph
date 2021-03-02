@@ -1,12 +1,20 @@
 # WarCraft-o-Graph
 
-WarCraft-o-Graph is a training service created by part of SiBears team. Service is based on Python Flask.
+WarCraft-o-Graph is a training service created by part of SiBears team. 
+
+WarCraft-o-Graph is a simple get/put secret storage based on Python Flask.
+The core idea: give a single service with lot of vulns (in contrast to common 1-2).
+
+Upd. (2021). Note, that fix/attack balance is totally broken, so it's mostly 
+find & fix race. Consider using of prepared services bundles (Warchief's services)
+to allow players to attack more vulns.
 
 ### Vulnerabilities:
+  - Hardcoded key
   - Weak id generation
   - Typo leading to SQL injection
   - Unescaped input at LIKE statements
-  - Hardcoded key
+  - Path traversal leading to DB exposure (+key reveal)
   - Wrong usage of bcrypt function
   - Mb some another vulns
 

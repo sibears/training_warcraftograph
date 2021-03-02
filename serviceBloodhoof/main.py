@@ -1,34 +1,39 @@
 import json
-import random
-import string
-import bcrypt
 import os.path
+import random
 import sqlite3
-import warcraftograph
 from hashlib import md5
+
+import bcrypt
 from flask import Flask, request, render_template, send_file
+
+import warcraftograph
+
 app = Flask(__name__)
 
 PORT = 8084
-DB_FILE = './db_secret.db'
+DB_FILE = './sexy_cows_storage.db'
 # don't forget to change it, my Lord
 WARCHIEF_SECRET = 'HOOFSAREGOOD'
-EXCUSES = [ "Sorry, our murlocs can't find your secret! Are your sure that it was stored?",
-            "Our shaman gets into the astral storm. The only thing he told us before become insane 'Nhhossuch zzecret'",
-            "Secrets? No such secrets! But u look like a fresh meeeeeat",
-            "Doez your secret sounds like 'Mrglw mrlrlrlgl mrgl'? If no - i can't find it!",
-            "Did u give money to lil' Muergll? No money - no secrets, greeny-skinny!"
-]
+EXCUSES = ["Sorry, our murlocs can't find your secret! Are your sure that it was stored?",
+           "Our shaman gets into the astral storm. The only thing he told us before become insane 'Nhhossuch zzecret'",
+           "Secrets? No such secrets! But u look like a fresh meeeeeat",
+           "Doez your secret sounds like 'Mrglw mrlrlrlgl mrgl'? If no - i can't find it!",
+           "Did u give money to lil' Muergll? No money - no secrets, greeny-skinny!"
+           ]
+
 
 @app.route('/')
 def main():
     return render_template('index.html')
 
+
 @app.route('/get')
 def get_secret():
     return render_template('get_secret.html')
 
-@app.route('/show/secrets', methods = ['POST'])
+
+@app.route('/show/secrets', methods=['POST'])
 def show_secrets():
     try:
         secret_name = request.form['name']
@@ -41,7 +46,7 @@ def show_secrets():
         SELECT count(*) FROM secrets
         WHERE name = ? AND public = 1
         '''
-    c.execute(query.replace('?','"%s"'%secret_name))
+    c.execute(query.replace('?', '"%s"' % secret_name))
 
     if c.fetchone()[0] > 0:
         c = db.cursor()
@@ -50,14 +55,15 @@ def show_secrets():
             WHERE name LIKE ? AND public = 1
             '''
         c.execute(query, [secret_name])
-        secrets = [(secret_name,'/api/image/%d'%row[0]) for row in c]
+        secrets = [(secret_name, '/api/image/%s' % row[0]) for row in c]
         cssclass = "img-thumbnail"
     else:
         msg = random.choice(EXCUSES)
         secrets = [(msg, "/api/image/nosuchsecret")]
         cssclass = ""
 
-    return render_template('secret.html', secrets=secrets, cssclass = cssclass)
+    return render_template('secret.html', secrets=secrets, cssclass=cssclass)
+
 
 @app.route('/secret/<id>')
 def get_secret_by_id(id):
@@ -80,19 +86,21 @@ def get_secret_by_id(id):
         secret_name = '"%s"' % secret_name
         cssclass = "img-thumbnail"
 
-    return render_template('secret.html', secrets=[(secret_name,fname)], cssclass=cssclass)
+    return render_template('secret.html', secrets=[(secret_name, fname)], cssclass=cssclass)
+
 
 @app.route('/store')
 def store_secret():
-    return render_template('store_secret.html', mind_id=random.randint(1,700))
+    return render_template('store_secret.html', mind_id=random.randint(1, 700))
+
 
 @app.route('/api/image/<path:id>')
 def get_image(id):
-    if id == "nosuchsecret":
+    if id == "nosuchsecret" or '.' in id:
         return send_file("static/nosecret.png", mimetype="image/png")
 
-    fname = "cache/%s.jpg" % (id)
     # If the secret has been already cached
+    fname = "cache/" + id
     if not os.path.isfile(fname):
         db = sqlite3.connect(DB_FILE)
         c = db.cursor()
@@ -110,15 +118,16 @@ def get_image(id):
 
     return send_file(fname, mimetype="image/jpeg")
 
+
 @app.route('/api/warchief/check')
 def check_secret():
     try:
         secret = request.args.get('secret')
-        user_hash = request.args.get('hash').decode('hex')
+        user_hash = request.args.get('hash')
     except TypeError:
         return "You are not Warchief, pleb!"
     except:
-        return "You need to proof that your are our Warthief!"
+        return "You need to proof that your are our Warchief!"
 
     to_hash = ''
     for k, v in request.args.items():
@@ -146,17 +155,18 @@ def check_secret():
     else:
         return "Nobody hides anything like that from your power"
 
-@app.route('/api/get', methods = ['GET'])
+
+@app.route('/api/get', methods=['GET'])
 def api_get_secret():
-    #TODO: check select results
+    # TODO: check select results
 
     try:
         name = request.args.get('name')
     except:
         return json.dumps({
-                    "result":"error",
-                    "message": "Wrong arguments"
-                })
+            "result": "error",
+            "message": "Wrong arguments"
+        })
 
     db = sqlite3.connect(DB_FILE)
     c = db.cursor()
@@ -176,25 +186,26 @@ def api_get_secret():
         }
         return json.dumps(result)
     return json.dumps({
-                "result":"error",
-                "message": "No such secret"
-            })
+        "result": "error",
+        "message": "No such secret"
+    })
 
-@app.route('/api/store', methods = ['POST'])
+
+@app.route('/api/store', methods=['POST'])
 def api_store_secret():
     try:
         secret_name = request.form['name']
         secret = request.form['secret']
     except:
         return json.dumps({
-                    "result":"error",
-                    "message": "Wrong arguments"
-                })
+            "result": "error",
+            "message": "Wrong arguments"
+        })
 
-    if 'public' in request.form:
-        is_public = 0
-    else:
+    if 'public' in request.form and request.form['public']:
         is_public = 1
+    else:
+        is_public = 0
 
     db = sqlite3.connect(DB_FILE)
     c = db.cursor()
@@ -229,23 +240,23 @@ def api_store_secret():
     db.commit()
 
     url = '/secret/%s' % id
-    message = 'Your secret is successfullly stored in spirit\'s mind and is avaible <b><u><a href="%s">here</a></u></b>'
+    message = 'Your secret is successfully stored in spirit\'s mind and is available <b><u><a href="%s">here</a></u></b>'
 
-    result_json = { 'result':'success',
-                    'message': message % url,
-                    'direct_link': '/api/image/%s' % id
-                  }
+    result_json = {'result': 'success',
+                   'message': message % url,
+                   'direct_link': '/api/image/%s' % id
+                   }
     return json.dumps(result_json)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     db = sqlite3.connect(DB_FILE)
     c = db.cursor()
     cmd = '''
         CREATE TABLE IF NOT EXISTS
             secrets(
                 pid INTEGER PRIMARY KEY AUTOINCREMENT,
-                id TEXT,
+                id TEXT ,
                 name TEXT,
                 secret TEXT,
                 public INTEGER
@@ -256,4 +267,4 @@ if __name__ == "__main__":
     if not os.path.isdir('cache'):
         os.mkdir("cache")
 
-    app.run ( host = '0.0.0.0', port = PORT, debug=True )
+    app.run(host='0.0.0.0', port=PORT, debug=True)

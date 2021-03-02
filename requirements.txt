@@ -1,3 +1,8 @@
-Flask == 0.10.1
-Pillow == 3.1.1
-python_bcrypt == 0.3.1
+click==7.1.2
+Flask==1.1.2
+itsdangerous==1.1.0
+Jinja2==2.11.3
+MarkupSafe==1.1.1
+Pillow==3.1.1
+python-bcrypt==0.3.1
+Werkzeug==1.0.1
