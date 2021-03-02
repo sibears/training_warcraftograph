@@ -60,11 +60,16 @@ def check(host: str):
 def put(host: str, flag_id: str, flag: str):
     s = FakeSession(host, PORT)
 
-    _log("Putting flag using REST API")
     name = flag_id
-    flag_link = _put_api(s, name, flag)
+    if _roll(1, 10) > 2:
+        _log("Putting flag using REST API")
+        flag_link = _put_api(s, name, flag)
+        new_id = f"{flag_link}:{name}"
+    else:
+        _log("Putting flag using HTML form. WARN: FRAGILE!")
+        flag_link = _put_html(s, name, flag)
+        new_id = f"{flag_link}:{name}"
 
-    new_id = f"{flag_link}:{name}"
     print(new_id, flush=True)  # It's our flag_id now! Tell it to jury!
     die(ExitStatus.OK, f"All OK! Saved flag: {new_id}")
 
@@ -149,10 +154,10 @@ class FakeSession(requests.Session):
         return r
 
 
-def _put_api(s: FakeSession, flag_id: str, flag: str, is_public=False) -> str:
+def _put_api(s: FakeSession, name: str, flag: str, is_public=False) -> str:
     try:
         r = s.post("/api/store", timeout=10, data=dict(
-            name=flag_id,  # TODO: generate funny name
+            name=name,  # TODO: generate funny name
             secret=flag,
             public=is_public,
         ))
@@ -161,6 +166,55 @@ def _put_api(s: FakeSession, flag_id: str, flag: str, is_public=False) -> str:
 
     if r.status_code != 200:
         die(ExitStatus.MUMBLE, f"Unexpected /api/store code {r.status_code}")
+
+    try:
+        flag_link = r.json()["direct_link"]
+        if flag_link:
+            return flag_link
+        else:
+            raise ValueError
+    except (ValueError, KeyError):
+        die(ExitStatus.MUMBLE, f"No direct_link in {r.text}")
+
+
+def _put_html(s: FakeSession, name: str, flag: str) -> str:
+    try:
+        r = s.get("/store", timeout=10)
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed to access /store: {e}")
+
+    if 'Do not report the Warchief!' not in r.text:
+        die(ExitStatus.MUMBLE, f"No private checkbox on /store page")
+
+    if '/api/store' not in r.text:
+        die(ExitStatus.MUMBLE, f"Missing form destination on /store")
+
+    try:
+        bs = BeautifulSoup(r.text, features="html.parser")
+
+        _log("Looking for form elements")
+        form = bs.find("form")
+        elem_area = form.find("textarea")
+        elem_name = form.find("input", attrs=dict(type="text"))
+        elem_checkbox = form.find("input", attrs=dict(type="checkbox"))
+
+        _log("Extracting parameter names")
+        name_arg = elem_name.get("name")
+        secret_arg = elem_area.get("name")
+        checkbox_arg, checkbox_val = elem_checkbox.get("name"), elem_checkbox.get("value")
+    except Exception as e:
+        die(ExitStatus.MUMBLE, f"Can't parse /store page: {e}")
+
+    args = {
+        name_arg: name,
+        secret_arg: flag,
+        checkbox_arg: checkbox_val,
+    }
+    _log(f"Putting secret using {args}")
+    try:
+        r = s.post("/api/store", timeout=10, data=args)
+    except Exception as e:
+        die(ExitStatus.DOWN, f"Failed to access /store: {e}")
 
     try:
         flag_link = r.json()["direct_link"]
@@ -201,7 +255,7 @@ def _get_from_api(s: FakeSession, name: str) -> str:
 
     try:
         secret = r.json()["secret"]
-    except ValueError:
+    except (ValueError, KeyError):
         die(ExitStatus.MUMBLE, f"Incorrect json in /api/get: {r.text}")
 
     return secret
