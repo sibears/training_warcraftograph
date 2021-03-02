@@ -44,18 +44,18 @@ def show_secrets():
     c = db.cursor()
     query = '''
         SELECT count(*) FROM secrets
-        WHERE name = ? AND public = 1
+        WHERE name LIKE ? AND public = 1
         '''
     c.execute(query.replace('?', '"%s"' % secret_name))
 
-    if c.fetchone()[0] > 0:
+    if c.fetchone()[0]:
         c = db.cursor()
         query = '''
-            SELECT id FROM secrets
+            SELECT id,name FROM secrets
             WHERE name LIKE ? AND public = 1
             '''
         c.execute(query, [secret_name])
-        secrets = [(secret_name, '/api/image/%s' % row[0]) for row in c]
+        secrets = [(row[1], '/api/image/%s' % row[0]) for row in c]
         cssclass = "img-thumbnail"
     else:
         msg = random.choice(EXCUSES)

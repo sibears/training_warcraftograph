@@ -47,7 +47,7 @@ def show_secrets():
         '''
     c.execute(query.replace('?', '"%s"' % secret_name))
 
-    if int(c.fetchone()[0]) > 0:
+    if c.fetchone()[0]:
         c = db.cursor()
         query = '''
             SELECT id,name FROM secrets
