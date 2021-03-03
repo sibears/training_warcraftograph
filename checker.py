@@ -171,9 +171,9 @@ def _put_api(s: FakeSession, name: str, flag: str, is_public=False) -> str:
             "/api/store",
             timeout=10,
             data=dict(
-                name=name,  # TODO: generate funny name
+                name=name,
                 secret=flag,
-                public=is_public,
+                public=is_public if is_public else None,
             ),
         )
     except Exception as e:
@@ -333,6 +333,7 @@ def _is_warchief_api_open(s: FakeSession) -> bool:
         die(ExitStatus.DOWN, f"Failed check Warchief API: {e}")
 
     answer = r.text
+    _log(f"Private API answer: {answer}")
     if "We have dat secret, chief!" in answer:
         return True
     elif "Nobody hides anything like that from your power" in answer:
