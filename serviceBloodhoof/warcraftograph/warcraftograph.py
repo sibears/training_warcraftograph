@@ -1,11 +1,12 @@
 #!usr/bin/env python3
 
-from PIL import Image
-import random
 import os
+import random
+
+from PIL import Image
 
 directory = os.path.join(os.path.dirname(__file__), "icons")
-wordindex = {
+word_index = {
     "0": "_phys_1.jpg",
     "1": "_class_2.jpg",
     "2": "_class_2b.jpg",
@@ -36,7 +37,8 @@ second_list = [
     "_nature_8.jpg",
 ]
 
-wordindex = dict((k, os.path.join(directory, v)) for k, v in wordindex.items())
+word_index = dict((k, os.path.join(directory, v)) for k, v in word_index.items())
+decode_index = dict((v, k) for k, v in word_index.items())
 second_list = [os.path.join(directory, x) for x in second_list]
 
 
@@ -63,12 +65,12 @@ def encode(plaintext, filename):
             k += 64
             number = 0
         if i < len(ls_in_hex):
-            image = Image.open(wordindex[ls_in_hex[i]])
+            image = Image.open(word_index[ls_in_hex[i]])
         else:
             image = Image.open(second_list[random.randint(0, len(second_list) - 1)])
-            base_image.paste(image, (x, y, z, k))
-            number += 1
-            x += 64
-            z += 64
+        base_image.paste(image, (x, y, z, k))
+        number += 1
+        x += 64
+        z += 64
 
-    base_image.save(filename)
+    base_image.save(filename, format="jpeg")

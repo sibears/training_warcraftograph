@@ -2,6 +2,7 @@ import json
 import os.path
 import random
 import sqlite3
+import uuid
 from hashlib import md5
 
 import bcrypt
@@ -228,10 +229,7 @@ def api_store_secret():
     c.execute(query, (secret_name, secret))
 
     pid = c.fetchone()[0]
-    id = "".join(
-        random.SystemRandom().choice(string.ascii_lowercase + string.digits)
-        for _ in range(32)
-    )
+    id = uuid.uuid4().hex
 
     query = """
         UPDATE secrets SET id = ? WHERE pid = ?

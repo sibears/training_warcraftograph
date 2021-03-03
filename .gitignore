@@ -1,4 +1,6 @@
 wcenv/
 .vscode/
+.idea/
+__pycache__/
 **/cache/
 **/*.db

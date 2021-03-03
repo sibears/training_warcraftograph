@@ -346,6 +346,7 @@ def _roll(a=0, b=1):
 
 
 def _gen_secret_name() -> str:
+    # Note that the result should be random enough, cos we sometimes use it as flag_id.
     # fmt: off
     intros = [
         "Secrets about", "Tactics for", "Loot list of", "Plans to assault",
