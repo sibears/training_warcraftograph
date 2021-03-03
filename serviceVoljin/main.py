@@ -12,7 +12,7 @@ import warcraftograph
 app = Flask(__name__)
 
 PORT = 8084
-DB_FILE = "./trolls_are_everywhere.db"
+DB_FILE = "./db_secrets.db"
 # don't forget to change it, my Lord
 WARCHIEF_SECRET = "FORDAHORDE"
 EXCUSES = [
