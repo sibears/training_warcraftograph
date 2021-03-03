@@ -318,8 +318,8 @@ def _show_secrets(s: FakeSession, name: str) -> {str: str}:
 
 
 def _is_warchief_api_open(s: FakeSession) -> bool:
-    payload = "%"
-    default_secret = "FORDAHORDE"
+    payload = b"%"
+    default_secret = b"FORDAHORDE"
     try:
         r = s.get(
             "/api/warchief/check",
