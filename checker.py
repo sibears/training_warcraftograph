@@ -193,23 +193,15 @@ class FakeSession(requests.Session):
 
 def _put_api(s: FakeSession, name: str, flag: str, is_public=False) -> str:
     try:
-<<<<<<< HEAD
-        r = s.post("/api/store", timeout=10, data=dict(
-            name=name,  # TODO: generate funny name
-            secret=flag,
-            public=is_public,
-        ))
-=======
         r = s.post(
             "/api/store",
             timeout=10,
             data=dict(
-                name=flag_id,  # TODO: generate funny name
+                name=name,  # TODO: generate funny name
                 secret=flag,
                 public=is_public,
             ),
         )
->>>>>>> 6726029 (Reformat code)
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed to post flag via API: {e}")
 
@@ -232,10 +224,10 @@ def _put_html(s: FakeSession, name: str, flag: str) -> str:
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed to access /store: {e}")
 
-    if 'Do not report the Warchief!' not in r.text:
+    if "Do not report the Warchief!" not in r.text:
         die(ExitStatus.MUMBLE, f"No private checkbox on /store page")
 
-    if '/api/store' not in r.text:
+    if "/api/store" not in r.text:
         die(ExitStatus.MUMBLE, f"Missing form destination on /store")
 
     try:
@@ -250,7 +242,9 @@ def _put_html(s: FakeSession, name: str, flag: str) -> str:
         _log("Extracting parameter names")
         name_arg = elem_name.get("name")
         secret_arg = elem_area.get("name")
-        checkbox_arg, checkbox_val = elem_checkbox.get("name"), elem_checkbox.get("value")
+        checkbox_arg, checkbox_val = elem_checkbox.get("name"), elem_checkbox.get(
+            "value"
+        )
     except Exception as e:
         die(ExitStatus.MUMBLE, f"Can't parse /store page: {e}")
 
@@ -377,21 +371,53 @@ def _roll(a=0, b=1):
     return random.randint(a, b)
 
 
-<<<<<<< HEAD
 def _gen_secret_name() -> str:
     intros = [
-        "Secrets about", "Tactics for", "Loot list of", "Plans to assault", "Notes from",
-        "Tips for", "Wipes at", "Tries of", "EP/GP score after", "Kill List in",
-        "Looking for raid to", "Mrgles Murgles, mmm", "Sexy cows of", "My enemies in"
+        "Secrets about",
+        "Tactics for",
+        "Loot list of",
+        "Plans to assault",
+        "Notes from",
+        "Tips for",
+        "Wipes at",
+        "Tries of",
+        "EP/GP score after",
+        "Kill List in",
+        "Looking for raid to",
+        "Mrgles Murgles, mmm",
+        "Sexy cows of",
+        "My enemies in",
     ]
     places = [
-        "Stormwind City", "Ironforge", "Darnassus", "Gnomeregan", "The Exodar", "Gilneas City",
-        "The Vindicaar", "Telogrus Rift", "Shadowforge City", "Boralus", "Mechagon City",
-        "Khaz Modan", "Northern Kalimdor", "Eastern Kingdoms", "Kul Tiras", "Gnomeregan",
-
-        "Scarlet Monastery", "Razorfen Kraul", "Uldaman", "Razorfen Downs",
-        "Zul’Farrak", "Maraudon", "Temple of Atal’Hakkar", "Blackrock Depths",
-        "Lower Blackrock Spire", "Upper Blackrock Spire", "Dire Maul", "Scholomance", "Stratholme",
+        "Stormwind City",
+        "Ironforge",
+        "Darnassus",
+        "Gnomeregan",
+        "The Exodar",
+        "Gilneas City",
+        "The Vindicaar",
+        "Telogrus Rift",
+        "Shadowforge City",
+        "Boralus",
+        "Mechagon City",
+        "Khaz Modan",
+        "Northern Kalimdor",
+        "Eastern Kingdoms",
+        "Kul Tiras",
+        "Gnomeregan",
+        "Scarlet Monastery",
+        "Razorfen Kraul",
+        "Uldaman",
+        "Razorfen Downs",
+        "Zul’Farrak",
+        "Maraudon",
+        "Temple of Atal’Hakkar",
+        "Blackrock Depths",
+        "Lower Blackrock Spire",
+        "Upper Blackrock Spire",
+        "Dire Maul",
+        "Scholomance",
+        "Stratholme",
     ]
     return f"{random.choice(intros)} {random.choice(places)} #{random.randint(1, 100_000_000_000)}"
 
@@ -432,12 +458,6 @@ def _gen_secret_data(name: str = "") -> str:
     if name:
         name = f"I know you wanted to find here {name}, but it's better! Here is my secret\n:"
     return name + random.choice(secrets)
-=======
-def _rand_string(
-    n=12, alphabet=string.ascii_uppercase + string.ascii_lowercase + string.digits
-):
-    return "".join(random.choice(alphabet) for _ in range(n))
->>>>>>> 6726029 (Reformat code)
 
 
 def _log(obj):
