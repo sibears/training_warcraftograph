@@ -1,1 +1,0 @@
-from .warcraftograph import encode
