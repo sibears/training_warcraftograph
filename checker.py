@@ -7,6 +7,7 @@ from __future__ import print_function
 import inspect
 import os
 import random
+import string
 import sys
 from enum import Enum
 from sys import argv
@@ -147,10 +148,10 @@ class FakeSession(requests.Session):
 
     # fmt: off
     def request(self, method, url,
-        params=None, data=None, headers=None,
-        cookies=None, files=None, auth=None, timeout=None, allow_redirects=True,
-        proxies=None, hooks=None, stream=None, verify=None, cert=None, json=None,
-    ):
+                params=None, data=None, headers=None,
+                cookies=None, files=None, auth=None, timeout=None, allow_redirects=True,
+                proxies=None, hooks=None, stream=None, verify=None, cert=None, json=None,
+                ):
         if url[0] == "/" and url[1] != "/":
             url = "http://" + self.host_port + url
         else:
@@ -318,22 +319,29 @@ def _show_secrets(s: FakeSession, name: str) -> {str: str}:
 
 
 def _is_warchief_api_open(s: FakeSession) -> bool:
-    payload = b"%"
     default_secret = b"FORDAHORDE"
+
+    # Form "kinda flag" and replace it's random part with like wildcard to
+    # mimic attacker behaviour.
+    flag = fake_flag()[:-1]
+    start = random.randint(0, len(flag))
+    num = random.randint(1, len(flag))
+    payload = flag[:start] + "%" + flag[start + num:] + "="
+
     try:
         r = s.get(
             "/api/warchief/check",
             timeout=10,
             params=dict(
                 secret=payload,
-                hash=bcrypt.hashpw(payload + default_secret, bcrypt.gensalt()),
+                hash=bcrypt.hashpw(payload.encode() + default_secret, bcrypt.gensalt()),
             ),
         )
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed check Warchief API: {e}")
 
     answer = r.text
-    _log(f"Private API answer: {answer}")
+    _log(f"Private API answer for {payload}: {answer}")
     if "We have dat secret, chief!" in answer:
         return True
     elif "Nobody hides anything like that from your power" in answer:
@@ -342,6 +350,14 @@ def _is_warchief_api_open(s: FakeSession) -> bool:
         return False
     else:
         die(ExitStatus.MUMBLE, f"Unexpected Warchief API answer: {r.text}")
+
+
+def fake_flag():
+    return rand_string(n=31, alphabet=string.ascii_uppercase + string.digits) + "="
+
+
+def rand_string(n=12, alphabet=string.ascii_uppercase + string.ascii_lowercase + string.digits):
+    return ''.join(random.choice(alphabet) for _ in range(n))
 
 
 def _roll(a=0, b=1):
