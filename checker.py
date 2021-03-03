@@ -145,50 +145,24 @@ class FakeSession(requests.Session):
         r.headers["Connection"] = "close"
         return r
 
-    def request(
-        self,
-        method,
-        url,
-        params=None,
-        data=None,
-        headers=None,
-        cookies=None,
-        files=None,
-        auth=None,
-        timeout=None,
-        allow_redirects=True,
-        proxies=None,
-        hooks=None,
-        stream=None,
-        verify=None,
-        cert=None,
-        json=None,
+    # fmt: off
+    def request(self, method, url,
+        params=None, data=None, headers=None,
+        cookies=None, files=None, auth=None, timeout=None, allow_redirects=True,
+        proxies=None, hooks=None, stream=None, verify=None, cert=None, json=None,
     ):
         if url[0] == "/" and url[1] != "/":
             url = "http://" + self.host_port + url
         else:
             url = url.format(host=self.host_port)
         r = super(FakeSession, self).request(
-            method,
-            url,
-            params,
-            data,
-            headers,
-            cookies,
-            files,
-            auth,
-            timeout,
-            allow_redirects,
-            proxies,
-            hooks,
-            stream,
-            verify,
-            cert,
-            json,
+            method, url, params, data, headers, cookies, files, auth, timeout,
+            allow_redirects, proxies, hooks, stream, verify, cert, json,
         )
         if TRACE:
             print("[TRACE] {method} {url} {r.status_code}".format(**locals()))
         return r
+    # fmt: on
 
 
 def _put_api(s: FakeSession, name: str, flag: str, is_public=False) -> str:
@@ -372,53 +346,23 @@ def _roll(a=0, b=1):
 
 
 def _gen_secret_name() -> str:
+    # fmt: off
     intros = [
-        "Secrets about",
-        "Tactics for",
-        "Loot list of",
-        "Plans to assault",
-        "Notes from",
-        "Tips for",
-        "Wipes at",
-        "Tries of",
-        "EP/GP score after",
-        "Kill List in",
-        "Looking for raid to",
-        "Mrgles Murgles, mmm",
-        "Sexy cows of",
-        "My enemies in",
+        "Secrets about", "Tactics for", "Loot list of", "Plans to assault",
+        "Notes from", "Tips for", "Wipes at", "Tries of", "EP/GP score after",
+        "Kill List in", "Looking for raid to", "Mrgles Murgles, mmm",
+        "Sexy cows of", "My enemies in",
     ]
     places = [
-        "Stormwind City",
-        "Ironforge",
-        "Darnassus",
-        "Gnomeregan",
-        "The Exodar",
-        "Gilneas City",
-        "The Vindicaar",
-        "Telogrus Rift",
-        "Shadowforge City",
-        "Boralus",
-        "Mechagon City",
-        "Khaz Modan",
-        "Northern Kalimdor",
-        "Eastern Kingdoms",
-        "Kul Tiras",
-        "Gnomeregan",
-        "Scarlet Monastery",
-        "Razorfen Kraul",
-        "Uldaman",
-        "Razorfen Downs",
-        "Zul’Farrak",
-        "Maraudon",
-        "Temple of Atal’Hakkar",
-        "Blackrock Depths",
-        "Lower Blackrock Spire",
-        "Upper Blackrock Spire",
-        "Dire Maul",
-        "Scholomance",
-        "Stratholme",
+        "Stormwind City", "Ironforge", "Darnassus", "Gnomeregan", "The Exodar",
+        "Gilneas City", "The Vindicaar", "Telogrus Rift", "Shadowforge City",
+        "Boralus", "Mechagon City", "Khaz Modan", "Northern Kalimdor",
+        "Eastern Kingdoms", "Kul Tiras", "Gnomeregan", "Scarlet Monastery",
+        "Razorfen Kraul", "Uldaman", "Razorfen Downs", "Zul’Farrak", "Maraudon",
+        "Temple of Atal’Hakkar", "Blackrock Depths", "Lower Blackrock Spire",
+        "Upper Blackrock Spire", "Dire Maul", "Scholomance", "Stratholme",
     ]
+    # fmt: on
     return f"{random.choice(intros)} {random.choice(places)} #{random.randint(1, 100_000_000_000)}"
 
 
