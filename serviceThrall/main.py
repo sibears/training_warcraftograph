@@ -138,11 +138,10 @@ def check_secret():
             continue
         to_hash += str(v)
 
+    to_hash = str.encode(to_hash + WARCHIEF_SECRET)
+    user_hash = user_hash.encode()
     try:
-        if (
-            bcrypt.hashpw(str.encode(to_hash + WARCHIEF_SECRET), str.encode(user_hash))
-            != user_hash
-        ):
+        if bcrypt.hashpw(to_hash, user_hash) != user_hash:
             return "Proof failed! Access to the Astral denied!"
     except:
         return "Are you trying to fool me, pleb?!"

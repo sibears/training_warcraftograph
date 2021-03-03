@@ -359,8 +359,8 @@ def _gen_secret_name() -> str:
         "Gilneas City", "The Vindicaar", "Telogrus Rift", "Shadowforge City",
         "Boralus", "Mechagon City", "Khaz Modan", "Northern Kalimdor",
         "Eastern Kingdoms", "Kul Tiras", "Gnomeregan", "Scarlet Monastery",
-        "Razorfen Kraul", "Uldaman", "Razorfen Downs", "Zul’Farrak", "Maraudon",
-        "Temple of Atal’Hakkar", "Blackrock Depths", "Lower Blackrock Spire",
+        "Razorfen Kraul", "Uldaman", "Razorfen Downs", "Zul'Farrak", "Maraudon",
+        "Temple of Atal'Hakkar", "Blackrock Depths", "Lower Blackrock Spire",
         "Upper Blackrock Spire", "Dire Maul", "Scholomance", "Stratholme",
     ]
     # fmt: on
