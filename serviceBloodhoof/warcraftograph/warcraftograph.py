@@ -41,7 +41,7 @@ second_list = [os.path.join(directory, x) for x in second_list]
 
 
 def encode(plaintext, filename):
-    ls_in_hex = plaintext.encode("hex")
+    ls_in_hex = plaintext.encode("utf-8").hex()
     size_of_table = int(len(ls_in_hex) ** 0.5) + 1
 
     base_image = Image.new(
