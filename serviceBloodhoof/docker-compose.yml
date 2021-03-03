@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  warcraftograph-service-bloodhoof:
+    build: .
+    image: warcraftograph-service-bloodhoof:latest
+    restart: always
+    ports:
+      - 8084:8084
+    volumes:
+      - ./db_secrets.db:/app/db_secrets.db
+      - ./cache:/app/cache

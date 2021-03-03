@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  warcraftograph-service-voljin:
+    build: .
+    image: warcraftograph-service-voljin:latest
+    restart: always
+    ports:
+      - 8084:8084
+    volumes:
+      - ./db_secrets.db:/app/db_secrets.db
+      - ./cache:/app/cache
