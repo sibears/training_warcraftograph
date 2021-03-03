@@ -81,8 +81,10 @@ def get(host: str, flag_id: str, flag: str):
         if not link.startswith("/api/image/"):
             raise ValueError
     except:
-        die(ExitStatus.CHECKER_ERROR,
-            f"Unexpected flagID from jury: {flag_id}! Are u using non-RuCTF checksystem?")
+        die(
+            ExitStatus.CHECKER_ERROR,
+            f"Unexpected flagID from jury: {flag_id}! Are u using non-RuCTF checksystem?",
+        )
 
     s = FakeSession(host, PORT)
 
@@ -97,26 +99,29 @@ def get(host: str, flag_id: str, flag: str):
         message = _get_from_api(s, name)
         if flag not in message:
             die(ExitStatus.CORRUPT, f"Can't find a flag in {message}")
-        die(ExitStatus.OK, f"All OK! Successfully retrieved a flag from API by name {name}")
+        die(
+            ExitStatus.OK,
+            f"All OK! Successfully retrieved a flag from API by name {name}",
+        )
 
 
 class FakeSession(requests.Session):
     """
-        FakeSession reference:
-            - `s = FakeSession(host, PORT)` -- creation
-            - `s` mimics all standard request.Session API except of fe features:
-                -- `url` can be started from "/path" and will be expanded to "http://{host}:{PORT}/path"
-                -- for non-HTTP scheme use "https://{host}/path" template which will be expanded in the same manner
-                -- `s` uses random browser-like User-Agents for every requests
-                -- `s` closes connection after every request, so exploit get splitted among multiple TCP sessions
-        Short requests reference:
-            - `s.post(url, data={"arg": "value"})`          -- send request argument
-            - `s.post(url, headers={"X-Boroda": "DA!"})`    -- send additional headers
-            - `s.post(url, auth=(login, password)`          -- send basic http auth
-            - `s.post(url, timeout=1.1)`                    -- send timeouted request
-            - `s.request("CAT", url, data={"eat":"mice"})`  -- send custom-verb request
-            (response data)
-            - `r.text`/`r.json()`  -- text data // parsed json object
+    FakeSession reference:
+        - `s = FakeSession(host, PORT)` -- creation
+        - `s` mimics all standard request.Session API except of fe features:
+            -- `url` can be started from "/path" and will be expanded to "http://{host}:{PORT}/path"
+            -- for non-HTTP scheme use "https://{host}/path" template which will be expanded in the same manner
+            -- `s` uses random browser-like User-Agents for every requests
+            -- `s` closes connection after every request, so exploit get splitted among multiple TCP sessions
+    Short requests reference:
+        - `s.post(url, data={"arg": "value"})`          -- send request argument
+        - `s.post(url, headers={"X-Boroda": "DA!"})`    -- send additional headers
+        - `s.post(url, auth=(login, password)`          -- send basic http auth
+        - `s.post(url, timeout=1.1)`                    -- send timeouted request
+        - `s.request("CAT", url, data={"eat":"mice"})`  -- send custom-verb request
+        (response data)
+        - `r.text`/`r.json()`  -- text data // parsed json object
     """
 
     USER_AGENTS = [
@@ -124,7 +129,7 @@ class FakeSession(requests.Session):
         """Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36""",
         """Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201""",
         """Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.13; ) Gecko/20101203""",
-        """Mozilla/5.0 (Windows NT 5.1) Gecko/20100101 Firefox/14.0 Opera/12.0"""
+        """Mozilla/5.0 (Windows NT 5.1) Gecko/20100101 Firefox/14.0 Opera/12.0""",
     ]
 
     def __init__(self, host, port):
@@ -136,20 +141,51 @@ class FakeSession(requests.Session):
 
     def prepare_request(self, request):
         r = super(FakeSession, self).prepare_request(request)
-        r.headers['User-Agent'] = random.choice(FakeSession.USER_AGENTS)
-        r.headers['Connection'] = "close"
+        r.headers["User-Agent"] = random.choice(FakeSession.USER_AGENTS)
+        r.headers["Connection"] = "close"
         return r
 
-    def request(self, method, url,
-                params=None, data=None, headers=None, cookies=None, files=None,
-                auth=None, timeout=None, allow_redirects=True, proxies=None,
-                hooks=None, stream=None, verify=None, cert=None, json=None):
+    def request(
+        self,
+        method,
+        url,
+        params=None,
+        data=None,
+        headers=None,
+        cookies=None,
+        files=None,
+        auth=None,
+        timeout=None,
+        allow_redirects=True,
+        proxies=None,
+        hooks=None,
+        stream=None,
+        verify=None,
+        cert=None,
+        json=None,
+    ):
         if url[0] == "/" and url[1] != "/":
             url = "http://" + self.host_port + url
         else:
             url = url.format(host=self.host_port)
-        r = super(FakeSession, self).request(method, url, params, data, headers, cookies, files,
-                                             auth, timeout, allow_redirects, proxies, hooks, stream, verify, cert, json)
+        r = super(FakeSession, self).request(
+            method,
+            url,
+            params,
+            data,
+            headers,
+            cookies,
+            files,
+            auth,
+            timeout,
+            allow_redirects,
+            proxies,
+            hooks,
+            stream,
+            verify,
+            cert,
+            json,
+        )
         if TRACE:
             print("[TRACE] {method} {url} {r.status_code}".format(**locals()))
         return r
@@ -157,11 +193,23 @@ class FakeSession(requests.Session):
 
 def _put_api(s: FakeSession, name: str, flag: str, is_public=False) -> str:
     try:
+<<<<<<< HEAD
         r = s.post("/api/store", timeout=10, data=dict(
             name=name,  # TODO: generate funny name
             secret=flag,
             public=is_public,
         ))
+=======
+        r = s.post(
+            "/api/store",
+            timeout=10,
+            data=dict(
+                name=flag_id,  # TODO: generate funny name
+                secret=flag,
+                public=is_public,
+            ),
+        )
+>>>>>>> 6726029 (Reformat code)
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed to post flag via API: {e}")
 
@@ -245,9 +293,13 @@ def _get_from_image(s: FakeSession, link: str) -> str:
 
 def _get_from_api(s: FakeSession, name: str) -> str:
     try:
-        r = s.get("/api/get", timeout=10, params=dict(
-            name=name,
-        ))
+        r = s.get(
+            "/api/get",
+            timeout=10,
+            params=dict(
+                name=name,
+            ),
+        )
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed to get flag via direct API: {e}")
 
@@ -264,9 +316,13 @@ def _get_from_api(s: FakeSession, name: str) -> str:
 
 def _show_secrets(s: FakeSession, name: str) -> {str: str}:
     try:
-        r = s.post("/show/secrets", timeout=20, data=dict(
-            name=name,
-        ))
+        r = s.post(
+            "/show/secrets",
+            timeout=20,
+            data=dict(
+                name=name,
+            ),
+        )
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed to get flag via image API: {e}")
 
@@ -276,9 +332,12 @@ def _show_secrets(s: FakeSession, name: str) -> {str: str}:
     res = {}
     try:
         bs = BeautifulSoup(r.text, features="html.parser")
-        secrets_div = bs.find("div", attrs={
-            "class": "inner cover secrets",
-        })
+        secrets_div = bs.find(
+            "div",
+            attrs={
+                "class": "inner cover secrets",
+            },
+        )
         names = secrets_div.find_all("h1")
         links = secrets_div.find_all("img")
 
@@ -292,19 +351,23 @@ def _show_secrets(s: FakeSession, name: str) -> {str: str}:
 
 def _is_warchief_api_open(s: FakeSession) -> bool:
     payload = "%"
-    default_secret = 'FORDAHORDE'
+    default_secret = "FORDAHORDE"
     try:
-        r = s.get("/api/warchief/check", timeout=10, params=dict(
-            secret=payload,
-            hash=bcrypt.hashpw(payload + default_secret, bcrypt.gensalt()),
-        ))
+        r = s.get(
+            "/api/warchief/check",
+            timeout=10,
+            params=dict(
+                secret=payload,
+                hash=bcrypt.hashpw(payload + default_secret, bcrypt.gensalt()),
+            ),
+        )
     except Exception as e:
         die(ExitStatus.DOWN, f"Failed check Warchief API: {e}")
 
     answer = r.text
     if "We have dat secret, chief!" in answer:
         return True
-    elif 'Proof failed!' in answer:
+    elif "Proof failed!" in answer:
         return False
     else:
         die(ExitStatus.MUMBLE, f"Unexpected Warchief API answer: {r.text}")
@@ -314,6 +377,7 @@ def _roll(a=0, b=1):
     return random.randint(a, b)
 
 
+<<<<<<< HEAD
 def _gen_secret_name() -> str:
     intros = [
         "Secrets about", "Tactics for", "Loot list of", "Plans to assault", "Notes from",
@@ -368,6 +432,12 @@ def _gen_secret_data(name: str = "") -> str:
     if name:
         name = f"I know you wanted to find here {name}, but it's better! Here is my secret\n:"
     return name + random.choice(secrets)
+=======
+def _rand_string(
+    n=12, alphabet=string.ascii_uppercase + string.ascii_lowercase + string.digits
+):
+    return "".join(random.choice(alphabet) for _ in range(n))
+>>>>>>> 6726029 (Reformat code)
 
 
 def _log(obj):
@@ -406,7 +476,10 @@ def _main():
         else:
             raise IndexError
     except IndexError:
-        die(ExitStatus.CHECKER_ERROR, f"Usage: {argv[0]} check|put|get IP FLAGID FLAG", )
+        die(
+            ExitStatus.CHECKER_ERROR,
+            f"Usage: {argv[0]} check|put|get IP FLAGID FLAG",
+        )
 
 
 if __name__ == "__main__":

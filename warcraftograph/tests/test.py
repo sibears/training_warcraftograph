@@ -21,11 +21,11 @@ def test_smoke(msg: str):
 
 def random_word(n):
     letters = string.printable
-    return ''.join(random.choice(letters) for _ in range(n))
+    return "".join(random.choice(letters) for _ in range(n))
 
 
 # Pytest is for weak ones B].
-if __name__ == '__main__':
+if __name__ == "__main__":
     cases = [
         "a",
         "a" * 4,
