@@ -335,6 +335,8 @@ def _is_warchief_api_open(s: FakeSession) -> bool:
     answer = r.text
     if "We have dat secret, chief!" in answer:
         return True
+    elif "Nobody hides anything like that from your power" in answer:
+        return True
     elif "Proof failed!" in answer:
         return False
     else:
