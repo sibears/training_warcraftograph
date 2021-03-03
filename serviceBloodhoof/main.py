@@ -138,7 +138,7 @@ def check_secret():
         if k == "hash":
             continue
         to_hash += str(v)
-    to_hash = md5(to_hash).hexdigest()
+    to_hash = md5(to_hash.encode()).hexdigest()
 
     try:
         if (
