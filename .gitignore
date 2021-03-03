@@ -1,4 +1,4 @@
 wcenv/
 .vscode/
-cache/
-*.db
+**/cache/
+**/*.db
